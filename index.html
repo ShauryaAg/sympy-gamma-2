@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SymPy Gamma</title>
+
+    <script type="text/javascript" async
+        src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/MathJax.js?config=TeX-MML-AM_CHTML">
+        </script>
+
+    <script type="text/javascript" async
+        src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+        </script>
+
+    <script type="text/javascript"
+        src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS_CHTML-full"></script>
+
+    <!-- bootstrap CDN  -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css"
+        integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk" crossorigin="anonymous">
+
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+
+    <form id="form">
+        <label for=" cost-func">Cost Function</label>
+        <input type="text" name="cost-func" id="cost-func">
+
+        <label for="profit">Profit</label>
+        <input type="text" name="profit" id="profit">
+
+        <input type="submit" value="submit">
+    </form>
+
+    <div id="container" class="container">
+    </div>
+
+    <script>
+        baseUrl = "https://ravigitte.pythonanywhere.com/solve/?exp="
+
+        httpGet = Url => {
+            var xmlHttp = new XMLHttpRequest()
+            xmlHttp.open("GET", Url, false)
+            xmlHttp.send(null)
+            return xmlHttp.response
+        }
+
+        getDerivative = () => {
+            costFunc = document.getElementById('cost-func').value
+            costFunc = costFunc.replace(/(\+)/g, '%2B')
+
+            url = baseUrl + `diff(${costFunc})`
+            JSONresponse = httpGet(url)
+            response = JSON.parse(JSONresponse)
+
+            var card = document.createElement('div')
+            card.setAttribute('class', 'card')
+
+            var title = document.createElement('div')
+            title.setAttribute('class', 'title')
+            title.innerHTML = `Derivative of the Cost Function (MC)`
+            card.appendChild(title)
+
+            var derivative = document.createElement('div')
+            derivative.setAttribute('class', 'derivative')
+            derivative.innerHTML = response[1]['output']
+            card.appendChild(derivative)
+
+            const container = document.getElementById('container')
+            container.appendChild(card)
+
+            return response[1]['value']
+        }
+
+        getRoots = derivative => {
+            profit = document.getElementById('profit').value
+
+            eqn = derivative + '-' + profit
+            eqn = eqn.replace(/(\+)/g, '%2B')
+
+            console.log(eqn)
+
+            url = baseUrl + eqn
+            JSONresponse = httpGet(url)
+            response = JSON.parse(JSONresponse)
+
+            var card = document.createElement('div')
+            card.setAttribute('class', 'card')
+
+            var title = document.createElement('div')
+            title.setAttribute('class', 'title')
+            title.innerHTML = `Roots of (${derivative}=${profit})`
+            card.appendChild(title)
+
+            var roots = document.createElement('div')
+            roots.setAttribute('class', 'roots')
+            roots.innerHTML = response[2]['output']
+            card.appendChild(roots)
+
+            const container = document.getElementById('container')
+            container.appendChild(card)
+
+            return response[2]['value']
+        }
+
+        getElasticity = (roots) => {
+            costFunc = document.getElementById('cost-func').value
+            roots = roots.slice(1, -1)
+            roots = roots.split(',')
+
+            rootint = []
+
+            roots.map(root => {
+                root = root.replace(/sqrt/g, 'Math.sqrt')
+
+                rootint.push(eval(root))
+            })
+
+            console.log(rootint)
+
+            maxroot = (Math.max.apply(null, rootint))
+
+            C = costFunc.replace(/q/g, maxroot)
+            dc = derivative.replace(/q/g, maxroot)
+            elasicity = eval(`((${C})/(${maxroot}))*(1/(${dc}))`)
+
+
+            console.log(`(${C}/${maxroot})*(1/${dc})`)
+            console.log(elasicity)
+
+            var card = document.createElement('div')
+            card.setAttribute('class', 'card')
+
+            var title = document.createElement('div')
+            title.setAttribute('class', 'title')
+            title.innerHTML = `Elasticity`
+            card.appendChild(title)
+
+            var roots = document.createElement('div')
+            roots.setAttribute('class', 'elasticity')
+            roots.innerHTML = elasicity
+            card.appendChild(roots)
+
+            const container = document.getElementById('container')
+            container.appendChild(card)
+        }
+
+        handleSubmit = (e) => {
+            e.preventDefault()
+
+            var myNode = document.getElementById("container");
+            while (myNode.firstChild) {
+                myNode.removeChild(myNode.firstChild);
+            }
+
+            derivative = getDerivative()
+            roots = getRoots(derivative)
+            getElasticity(roots)
+        }
+
+        form = document.getElementById('form')
+        form.addEventListener('submit', handleSubmit)
+    </script>
+
+</body>
+
+</html>
